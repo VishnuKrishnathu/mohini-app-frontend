@@ -53,24 +53,20 @@ const uploadImage = (
   access_token,
   setFiles
 ) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      createStoryMedia({
-        setter: (uploadedFile) => {
-          setFiles((prevFiles) => [...prevFiles, uploadedFile]);
-          resolve(uploadedFile);
-        },
-        errorHandler: (err) => {
-          setError(err);
-          setIsLoading(false);
-          reject(err);
-        },
-        data: formData,
-        loader: setIsLoading,
+      setIsLoading(true);
+      const uploadedFile = await createStoryMedia({
         token: access_token,
+        data: formData,
       });
+
+      setFiles((prevFiles) => [...prevFiles, uploadedFile]);
+      setIsLoading(false);
+      resolve(uploadedFile);
     } catch (error) {
-      console.error({ error });
+      console.error("Error uploading image:", error);
+      setError(error);
       setIsLoading(false);
       reject(error);
     }
@@ -632,16 +628,17 @@ export const EditStoryModal = ({
                   };
                 }
 
+                setIsSaving(true);
                 await partialUpdateStoryById({
-                  setter: () => {},
-                  loader: setIsSaving,
-                  data: updatePayload,
                   token: access_token,
+                  data: updatePayload,
                 });
+                setIsSaving(false);
 
                 window.location.reload();
               } catch (error) {
                 handleSetIsLoading(false);
+                setIsSaving(false);
                 console.error("Saving failed: ", error);
               }
             }}

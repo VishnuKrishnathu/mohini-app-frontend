@@ -2,15 +2,25 @@ import "../../style.css";
 import "../ShikshalokamVoiceChat/shikshaChatStyle.css";
 import { ai4BharatASRApi } from "api/endpoints/ai";
 import { BiLoader } from "react-icons/bi";
-import { clearFromStorage, handleS3Upload } from "../../services/storage_service";
+import {
+  clearFromStorage,
+  handleS3Upload,
+} from "../../services/storage_service";
 import { createMessage } from "../interview-voice";
-import { EditStoryModal, PhotoUploadSection, StoryActionsContainer } from "./StoryActionsModule";
+import {
+  EditStoryModal,
+  PhotoUploadSection,
+  StoryActionsContainer,
+} from "./StoryActionsModule";
 import { FaCircle } from "react-icons/fa6";
 import { FaMicrophone, FaRegStopCircle } from "react-icons/fa";
 import { getFlowConfig } from "../../config/flowConfig";
 import { getSessionDetailsApi } from "../../api/endpoints/chat";
 import { getStoryAllMedia } from "api/endpoints";
-import { languageList, PTM_CONVERSATION_STATUS_TYPE } from "../ShikshalokamVoiceChat/enum";
+import {
+  languageList,
+  PTM_CONVERSATION_STATUS_TYPE,
+} from "../ShikshalokamVoiceChat/enum";
 import { MdSend } from "react-icons/md";
 import { savePTMQuestionApi } from "../../api/endpoints/ptm";
 import { setLanguage } from "../../i18n";
@@ -88,23 +98,39 @@ const UnifiedVoiceBasedChat = ({ flowType }) => {
 
   const accessToken = useChatDataLocalStore((state) => state.accessToken);
 
-  const acceptedTnc = useStorage(STORE_NAME_CONSTANTS.USER_DATA)((state) => state.has_accepted_tnc);
-  const storageFlow = useStorage(STORE_NAME_CONSTANTS.CHAT_DATA)((state) => state.flow);
-  const sessionId = useStorage(STORE_NAME_CONSTANTS.CHAT_DATA)((state) => state.sessionId);
-  const profileId = useStorage(STORE_NAME_CONSTANTS.USER_DATA)((state) => state.profileId);
-  const previousUrl = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)((state) => state.previousUrl);
+  const acceptedTnc = useStorage(STORE_NAME_CONSTANTS.USER_DATA)(
+    (state) => state.has_accepted_tnc
+  );
+  const storageFlow = useStorage(STORE_NAME_CONSTANTS.CHAT_DATA)(
+    (state) => state.flow
+  );
+  const sessionId = useStorage(STORE_NAME_CONSTANTS.CHAT_DATA)(
+    (state) => state.sessionId
+  );
+  const profileId = useStorage(STORE_NAME_CONSTANTS.USER_DATA)(
+    (state) => state.profileId
+  );
+  const previousUrl = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)(
+    (state) => state.previousUrl
+  );
 
-  const languageToUse = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)((state) => state.chatLanguage);
-  const setLanguageToUse = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)((state) => state.setChatLanguage);
+  const languageToUse = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)(
+    (state) => state.chatLanguage
+  );
+  const setLanguageToUse = useStorage(STORE_NAME_CONSTANTS.SITE_DATA)(
+    (state) => state.setChatLanguage
+  );
   const {
     setIsNewChatOpen,
     setIsOldChatOpen,
     setSessionId,
     setChatLanguage,
-    setChatBotClickedOn
+    setChatBotClickedOn,
   } = useStorage(STORE_NAME_CONSTANTS.CHAT_DATA).getState();
 
-  const { setAcceptedTnC } = useStorage(STORE_NAME_CONSTANTS.USER_DATA).getState();
+  const { setAcceptedTnC } = useStorage(
+    STORE_NAME_CONSTANTS.USER_DATA
+  ).getState();
 
   // Other variable definitions
   // Get flow-specific configuration
@@ -444,28 +470,32 @@ const UnifiedVoiceBasedChat = ({ flowType }) => {
         const tempMediaArr = [];
         setIsImageUploading(true);
 
-        await getStoryAllMedia({
-          setter: (data) => {
-            for (let item of Object.values(data?.results || [])) {
-              if (item.include_in_story) {
-                tempMediaArr.push(item);
-              }
-            }
-            setFiles(tempMediaArr);
-          },
-          data: {
-            story: story_id,
-          },
-        });
+        try {
+          const response = await getStoryAllMedia({
+            data: {
+              story: story_id,
+            },
+            token: accessToken,
+          });
 
-        setIsImageUploading(false);
+          for (let item of Object.values(response?.results || [])) {
+            if (item.include_in_story) {
+              tempMediaArr.push(item);
+            }
+          }
+          setFiles(tempMediaArr);
+        } catch (error) {
+          console.error("Error fetching story media:", error);
+        } finally {
+          setIsImageUploading(false);
+        }
       }
     };
 
     fetchMedia();
 
     return () => {};
-  }, [storyData]);
+  }, [storyData, accessToken]);
 
   // Call end-story API to generate the story
   const callEndStory = async (hasClickedOnRegenerate = false) => {

@@ -51,8 +51,8 @@ const PdfDownloader = ({
   const [storyMediaIdArray, setStoryMediaIdArray] = useState(null);
   const downloadTriggeredRef = React.useRef(false);
 
-    const pdfRef = React.useRef();
-    const imagesPerPage = 2;
+  const pdfRef = React.useRef();
+  const imagesPerPage = 2;
 
   const cookie = new Cookies();
   const accessToken = useMemo(() => {
@@ -294,49 +294,67 @@ const PdfDownloader = ({
 
     return new Promise((resolve, reject) => {
       if (story_media.length === 0) {
-        createStoryMedia({
-          setter: (data) => {
+        const createMedia = async () => {
+          try {
+            setIsLoading(true);
+            await createStoryMedia({
+              token: localStorage.getItem("accessToken"),
+              data: formData,
+            });
+
             setError({});
-            getStoryAllMedia({
-              setter: (data) => setFiles(data?.results || []),
-              loader: setIsUploading,
+
+            // Fetch updated media list
+            setIsUploading(true);
+            const response = await getStoryAllMedia({
               data: {
                 story: storyData?.id,
               },
               token: localStorage.getItem("accessToken"),
             });
+            setFiles(response?.results || []);
+            setIsUploading(false);
+            setIsLoading(false);
             resolve();
-          },
-          errorHandler: (error) => {
+          } catch (error) {
+            console.error("Error creating story media:", error);
             setError(error);
+            setIsUploading(false);
+            setIsLoading(false);
             reject(error);
-          },
-          loader: setIsLoading,
-          data: formData,
-          token: localStorage.getItem("accessToken"),
-        });
+          }
+        };
+
+        createMedia();
       } else {
-        updateStoryMedia({
-          setter: (data) => {
+        const updateMedia = async () => {
+          try {
+            setIsLoading(true);
+            await updateStoryMedia({
+              token: localStorage.getItem("accessToken"),
+              data: {
+                story: storyData?.id,
+                name: fileName,
+                file: fileData,
+                id: mediaId,
+                media_type: "application/pdf",
+                access_token: localStorage.getItem("accessToken"),
+                session: JSON.parse(localStorage.getItem("sessionid")),
+              },
+            });
+
             setError({});
+            setIsLoading(false);
             resolve();
-          },
-          errorHandler: (error) => {
+          } catch (error) {
+            console.error("Error updating story media:", error);
             setError(error);
+            setIsLoading(false);
             reject(error);
-          },
-          loader: setIsLoading,
-          data: {
-            story: storyData?.id,
-            name: fileName,
-            file: fileData,
-            id: mediaId,
-            media_type: "application/pdf",
-            access_token: localStorage.getItem("accessToken"),
-            session: JSON.parse(localStorage.getItem("sessionid")),
-          },
-          token: localStorage.getItem("accessToken"),
-        });
+          }
+        };
+
+        updateMedia();
       }
     });
   }

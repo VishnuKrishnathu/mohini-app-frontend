@@ -76,72 +76,81 @@ export async function createAuthRequest({
 /**
  * Get story by ID
  * @param {Object} params - Request parameters
- * @param {Function} params.loader - Loading state setter
- * @param {Function} params.setter - Response data setter
  * @param {string} params.token - Authorization token
  * @param {Object} params.data - Data object containing story ID
  * @param {string} params.data.id - Story ID
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} Response data
  */
 export const getStoryById = async ({
-  loader,
-  setter,
   token,
   data = {
     id: "",
   },
 }) => {
   try {
-    await createAuthRequest({
-      loader,
-      setter,
-      token,
-      method: "GET",
-      url: `${API_ENDPOINTS.STORY}${data.id}/`,
-    });
+    if (!token) {
+      throw new Error("Authorization token is required!");
+    }
+
+    if (!data.id) {
+      throw new Error("Story ID is required!");
+    }
+
+    const config = {
+      headers: {
+        Authorization: token,
+      },
+    };
+
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.STORY}${data.id}/`,
+      config
+    );
+
+    return response?.data || {};
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching story by ID:", error);
+    throw error;
   }
 };
 
 /**
  * Get all media for a story
  * @param {Object} params - Request parameters
- * @param {Function} params.loader - Loading state setter
- * @param {Function} params.setter - Response data setter
  * @param {string} params.token - Authorization token
  * @param {Object} params.data - Data object containing story ID
  * @param {string} params.data.story - Story ID
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} Response data
  */
 export const getStoryAllMedia = async ({
-  loader,
-  setter,
   token,
   data = {
     story: "",
   },
 }) => {
   try {
-    await createAuthRequest({
-      loader,
-      setter,
-      token,
+    if (!token) {
+      throw new Error("Authorization token is required!");
+    }
+
+    const config = {
+      headers: {
+        Authorization: token,
+      },
       params: data,
-      method: "GET",
-      url: API_ENDPOINTS.STORY_MEDIA,
-    });
+    };
+
+    const response = await apiClient.get(API_ENDPOINTS.STORY_MEDIA, config);
+    return response?.data || {};
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching story media:", error);
+    throw error;
   }
 };
 
 /**
  * Create story media
  * @param {Object} params - Request parameters
- * @param {Function} params.loader - Loading state setter
- * @param {Function} params.setter - Response data setter
- * @param {Function} params.errorHandler - Error handler function
  * @param {string} params.token - Authorization token
  * @param {Object} params.data - Media data
  * @param {string} params.data.story - Story ID
@@ -149,12 +158,9 @@ export const getStoryAllMedia = async ({
  * @param {Array} params.data.file - File array
  * @param {string} params.data.file_url - File URL
  * @param {string} params.data.media_type - Media type
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} Response data
  */
 export const createStoryMedia = async ({
-  loader,
-  setter,
-  errorHandler,
   token,
   data = {
     story: "",
@@ -165,26 +171,32 @@ export const createStoryMedia = async ({
   },
 }) => {
   try {
-    await createAuthRequest({
-      loader,
-      setter,
-      errorHandler,
-      token,
+    if (!token) {
+      throw new Error("Authorization token is required!");
+    }
+
+    const config = {
+      headers: {
+        Authorization: token,
+      },
+    };
+
+    const response = await apiClient.post(
+      API_ENDPOINTS.STORY_MEDIA,
       data,
-      method: "POST",
-      url: API_ENDPOINTS.STORY_MEDIA,
-    });
+      config
+    );
+
+    return response?.data || {};
   } catch (error) {
-    console.error(error);
+    console.error("Error creating story media:", error);
+    throw error;
   }
 };
 
 /**
  * Partially update story by ID
  * @param {Object} params - Request parameters
- * @param {Function} params.loader - Loading state setter
- * @param {Function} params.setter - Response data setter
- * @param {Function} params.errorHandler - Error handler function
  * @param {string} params.token - Authorization token
  * @param {Object} params.data - Update data
  * @param {string} params.data.id - Story ID
@@ -193,12 +205,9 @@ export const createStoryMedia = async ({
  * @param {string} params.data.session - Session ID
  * @param {string} params.data.flow - Flow type
  * @param {Object} params.data.other_params - Additional parameters
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} Response data
  */
 export const partialUpdateStoryById = async ({
-  loader,
-  setter,
-  errorHandler,
   token,
   data = {
     id: "",
@@ -210,32 +219,46 @@ export const partialUpdateStoryById = async ({
   },
 }) => {
   try {
-    await createAuthRequest({
-      loader,
-      setter,
-      errorHandler,
-      token,
-      data: {
-        formatted_content: JSON.stringify(data?.formatted_content),
-        access_token: data?.access_token,
-        session: data?.session,
-        flow: data?.flow,
-        other_params: data?.other_params,
+    if (!token) {
+      throw new Error("Authorization token is required!");
+    }
+
+    if (!data.id) {
+      throw new Error("Story ID is required!");
+    }
+
+    const config = {
+      headers: {
+        Authorization: token,
       },
-      method: "PATCH",
-      url: `${API_ENDPOINTS.STORY}${data?.id}/`,
-    });
+    };
+
+    const requestData = {
+      formatted_content: data?.formatted_content
+        ? JSON.stringify(data.formatted_content)
+        : data?.formatted_content,
+      access_token: data?.access_token,
+      session: data?.session,
+      flow: data?.flow,
+      other_params: data?.other_params,
+    };
+
+    const response = await apiClient.patch(
+      `${API_ENDPOINTS.STORY}${data.id}/`,
+      requestData,
+      config
+    );
+
+    return response?.data || {};
   } catch (error) {
-    console.error(error);
+    console.error("Error updating story:", error);
+    throw error;
   }
 };
 
 /**
  * Update story media
  * @param {Object} params - Request parameters
- * @param {Function} params.loader - Loading state setter
- * @param {Function} params.setter - Response data setter
- * @param {Function} params.errorHandler - Error handler function
  * @param {string} params.token - Authorization token
  * @param {Object} params.data - Update data
  * @param {string} params.data.story - Story ID
@@ -246,12 +269,9 @@ export const partialUpdateStoryById = async ({
  * @param {string} params.data.session - Session ID
  * @param {string} params.data.flow - Flow type
  * @param {string} params.data.media_type - Media type
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} Response data
  */
 export const updateStoryMedia = async ({
-  loader,
-  setter,
-  errorHandler,
   token,
   data = {
     story: "",
@@ -261,9 +281,18 @@ export const updateStoryMedia = async ({
     access_token: "",
     session: "",
     flow: "",
+    media_type: "",
   },
 }) => {
   try {
+    if (!token) {
+      throw new Error("Authorization token is required!");
+    }
+
+    if (!data.id) {
+      throw new Error("Media ID is required!");
+    }
+
     const formData = new FormData();
     formData.append("story", data.story);
     formData.append("name", data.name);
@@ -272,16 +301,22 @@ export const updateStoryMedia = async ({
     formData.append("access_token", data.access_token);
     formData.append("flow", data.flow);
     formData.append("session", data.session);
-    await createAuthRequest({
-      loader,
-      setter,
-      errorHandler,
-      token,
-      data: formData,
-      method: "PUT",
-      url: `${API_ENDPOINTS.STORY_MEDIA}${data?.id}/`,
-    });
+
+    const config = {
+      headers: {
+        Authorization: token,
+      },
+    };
+
+    const response = await apiClient.put(
+      `${API_ENDPOINTS.STORY_MEDIA}${data.id}/`,
+      formData,
+      config
+    );
+
+    return response?.data || {};
   } catch (error) {
-    console.error(error);
+    console.error("Error updating story media:", error);
+    throw error;
   }
 };
