@@ -67,6 +67,57 @@ export const FLOW_CONFIG_V2 = {
       allowImageUpload: true,
       imageUploadLimit: 10,
       displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.GuestDiscussion]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.LoginDiscussion]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.ListeningActivity]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.GuestMiStory]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: true,
+      imageUploadLimit: 10,
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.LoginMiStory]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: true,
+      imageUploadLimit: 10,
+      displayEditStory: true,
+      displayDownloadStory: true,
     },
   },
 };
@@ -122,4 +173,30 @@ export const getStringVariables = text => {
  */
 export const processStringSubstitution = (text, obj) => {
   return text.replace(/{(\w+)}/g, (match, key) => obj[key] || match);
+};
+
+/**
+ * Safely retrieves postChatConfig for a specific flow with default fallback values
+ * @param {string} flowName - The name of the flow (e.g., sessionFlowName.GuestDiscussion)
+ * @returns {Object} The postChatConfig object with default values if not found
+ * @example
+ * getPostChatConfig(sessionFlowName.GuestDiscussion)
+ * // Returns: { allowImageUpload: false, imageUploadLimit: 0, displayEditStory: true, displayDownloadStory: true }
+ */
+export const getPostChatConfig = flowName => {
+  const defaultConfig = {
+    allowImageUpload: false,
+    imageUploadLimit: 0,
+    displayEditStory: true,
+    displayDownloadStory: true,
+  };
+
+  if (!flowName || !FLOW_CONFIG_V2[flowName]) {
+    return defaultConfig;
+  }
+
+  return {
+    ...defaultConfig,
+    ...FLOW_CONFIG_V2[flowName].postChatConfig,
+  };
 };

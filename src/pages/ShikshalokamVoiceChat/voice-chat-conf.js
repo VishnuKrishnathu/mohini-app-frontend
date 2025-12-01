@@ -59,7 +59,7 @@ import useUserDataLocalStore from "store/slices/userData/userDataLocal";
 import useVoiceRecord, { default_wave_surfer_config } from "../interview-text-voice/useVoiceRecord";
 import VoiceTextInput from "../../components/VoiceTextInput";
 import WaveSurferPlayer from "../interview-text-voice/voice-player";
-import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution } from "../../config/flowConfig";
+import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution, getPostChatConfig } from "../../config/flowConfig";
 
 const cookies = new Cookies();
 
@@ -2533,7 +2533,10 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     const filesArray = Array.from(e.target.files);
     const currentFiles = [...files];
 
-    if (currentFiles?.length + filesArray.length > 10) {
+    const postChatConfig = getPostChatConfig(storageFlow);
+    const uploadLimit = postChatConfig.imageUploadLimit;
+
+    if (currentFiles?.length + filesArray.length > uploadLimit) {
       setFileErrorText(fileExceedText);
       return;
     }
@@ -2801,7 +2804,10 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
           )}
           {isStreamingComplete && showFileInput && !showHomepage && !isEndStoryLoading && !isLoading && !isPdfDownloading && storyData?.id !== "" && !([sessionFlowName.GuestMiStory].includes(storageFlow) && accessToken) && (
             <>
-              {![sessionFlowName.ListeningActivity].includes(storageFlow) && (
+              {(() => {
+                const postChatConfig = getPostChatConfig(storageFlow);
+                return postChatConfig.allowImageUpload;
+              })() && (
                 <div className="div13">
                   <ChatMessage
                     botNameToDisplay={botNameToDisplay}
@@ -2838,7 +2844,9 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
                           handleMultipleUploads(e, storyData);
                         }}
                         onClick={e => {
-                          if (files?.length >= 10) {
+                          const postChatConfig = getPostChatConfig(storageFlow);
+                          const uploadLimit = postChatConfig.imageUploadLimit;
+                          if (files?.length >= uploadLimit) {
                             setFileErrorText(fileExceedText);
                           } else {
                             setFileErrorText("");
@@ -2909,38 +2917,47 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
                   chatId={"download-story-id"}
                   isStaticMessage={true}
                 />
-                {!projectId && (
+                {!projectId &&
+                  (() => {
+                    const postChatConfig = getPostChatConfig(storageFlow);
+                    return postChatConfig.displayDownloadStory;
+                  })() && (
+                    <div className="div20">
+                      <button
+                        className="clickable-button"
+                        onClick={() => {
+                          if (sessionId) {
+                            pdfDownloadSidebar(sessionId);
+                          }
+                        }}
+                        disabled={isLoading || isPdfDownloading}
+                      >
+                        <div className="download-story-div">
+                          <FiDownload className="icon-1" />
+                          <span className="div16" ref={endPageToScrollRef}>
+                            {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
+                          </span>
+                        </div>
+                      </button>
+
+                      {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
+                    </div>
+                  )}
+                {(() => {
+                  const postChatConfig = getPostChatConfig(storageFlow);
+                  return postChatConfig.displayEditStory;
+                })() && (
                   <div className="div20">
-                    <button
-                      className="clickable-button"
-                      onClick={() => {
-                        if (sessionId) {
-                          pdfDownloadSidebar(sessionId);
-                        }
-                      }}
-                      disabled={isLoading || isPdfDownloading}
-                    >
+                    <button className="clickable-button" onClick={openModal} disabled={isLoading || isPdfDownloading}>
                       <div className="download-story-div">
-                        <FiDownload className="icon-1" />
+                        <MdEdit className="icon-1" />
                         <span className="div16" ref={endPageToScrollRef}>
-                          {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
+                          {storageFlow && !accessToken ? t("editReportText") : t("editStoryText")}
                         </span>
                       </div>
                     </button>
-
-                    {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
                   </div>
                 )}
-                <div className="div20">
-                  <button className="clickable-button" onClick={openModal} disabled={isLoading || isPdfDownloading}>
-                    <div className="download-story-div">
-                      <MdEdit className="icon-1" />
-                      <span className="div16" ref={endPageToScrollRef}>
-                        {storageFlow && !accessToken ? t("editReportText") : t("editStoryText")}
-                      </span>
-                    </div>
-                  </button>
-                </div>
                 {projectId && (
                   <div className="div20">
                     <button
