@@ -131,6 +131,7 @@ export const FLOW_TO_ROUTE_MAP = {
     oneshot: bot_routes.oneshot,
   },
   [sessionFlowName.SchoolSurvey]: bot_routes.shikshalokam_chaupal,
+  [sessionFlowName.ParentPerceptionSurvey]: bot_websocket.parent_perception_survey,
 };
 
 export const FLOW_TO_WEBSOCKET_MAP = {
@@ -142,6 +143,7 @@ export const FLOW_TO_WEBSOCKET_MAP = {
     oneshot: bot_routes.oneshot,
   },
   [sessionFlowName.SchoolSurvey]: bot_websocket.listening_activity,
+  [sessionFlowName.ParentPerceptionSurvey]: bot_websocket.parent_perception_survey,
 };
 
 export const getWebSocketUrlFromSession = (sessionName, selectedType = undefined) => {
