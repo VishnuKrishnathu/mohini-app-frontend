@@ -24,6 +24,7 @@ import { TbReload } from "react-icons/tb";
 import { toast } from "react-toastify";
 import { updateReflectionStatusApi, getAI4BharatAudioApi, ai4BharatASRApi } from "api/endpoints";
 import { updateStoryMediaApi } from "api/endpoints";
+import { getFlowImageConfigApi } from "api/endpoints/flowConfig";
 import { useAudio } from "hooks/useAudio";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useChatDataSessionStore } from "store";
@@ -59,7 +60,7 @@ import useUserDataLocalStore from "store/slices/userData/userDataLocal";
 import useVoiceRecord, { default_wave_surfer_config } from "../interview-text-voice/useVoiceRecord";
 import VoiceTextInput from "../../components/VoiceTextInput";
 import WaveSurferPlayer from "../interview-text-voice/voice-player";
-import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution, getPostChatConfig } from "../../config/flowConfig";
+import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution, getPostChatConfig, updatePostChatConfigFromAPI, bytesToMB } from "../../config/flowConfig";
 
 const cookies = new Cookies();
 
@@ -865,6 +866,32 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
+  /**
+   * Fetch dynamic image configuration from backend API
+   * Updates flow config with API values, falls back to defaults if API fails
+   * Runs when storageFlow changes
+   */
+  useEffect(() => {
+    if (!storageFlow) return;
+
+    const fetchImageConfig = async () => {
+      try {
+        const flowRoute = getRouteFromSession(storageFlow);
+        if (!flowRoute) return;
+
+        const apiConfig = await getFlowImageConfigApi(flowRoute);
+        if (apiConfig) {
+          updatePostChatConfigFromAPI(storageFlow, apiConfig);
+        }
+      } catch (error) {
+        console.log("Using default image config due to API error:", error.message);
+        // Fallback: Continue using current FLOW_CONFIG_V2 defaults
+      }
+    };
+
+    fetchImageConfig();
+  }, [storageFlow]);
 
   /**
    * Browser back button handling - intercepts browser navigation
@@ -2547,6 +2574,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     const currentFiles = [...files];
 
     const uploadLimit = getPostChatConfigValue("imageUploadLimit");
+    const maxFileSize = getPostChatConfigValue("maxImageSize");
 
     if (currentFiles?.length + filesArray.length > uploadLimit) {
       setFileErrorText(fileExceedText);
@@ -2558,12 +2586,11 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
       return;
     }
 
-    const maxFileSize = 50 * 1024 * 1024;
     const allowedExtensions = ["jpeg", "jpg", "png", "svg", "webp", "heif", "heic"];
 
     const uploadPromises = filesArray.map(async file => {
       if (file.size > maxFileSize) {
-        setFileErrorText(fileSizeText);
+        setFileErrorText(`${fileSizeText} ${bytesToMB(maxFileSize)}MB`);
         setIsLoading(false);
         throw new Error("File size exceeds limit");
       }
