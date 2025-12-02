@@ -273,6 +273,19 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   // ========================================================================
 
   /**
+   * Get a specific property from postChatConfig for the current flow
+   * @param {string} propertyName - The name of the config property to retrieve
+   * @returns {any} The value of the requested config property
+   * @example
+   * getPostChatConfigValue('allowImageUpload') // returns true/false
+   * getPostChatConfigValue('imageUploadLimit') // returns number
+   */
+  const getPostChatConfigValue = propertyName => {
+    const postChatConfig = getPostChatConfig(storageFlow);
+    return postChatConfig[propertyName];
+  };
+
+  /**
    * Adds user messages to chat history
    * Creates and appends user message to conversation
    */
@@ -2533,8 +2546,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     const filesArray = Array.from(e.target.files);
     const currentFiles = [...files];
 
-    const postChatConfig = getPostChatConfig(storageFlow);
-    const uploadLimit = postChatConfig.imageUploadLimit;
+    const uploadLimit = getPostChatConfigValue("imageUploadLimit");
 
     if (currentFiles?.length + filesArray.length > uploadLimit) {
       setFileErrorText(fileExceedText);
@@ -2804,10 +2816,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
           )}
           {isStreamingComplete && showFileInput && !showHomepage && !isEndStoryLoading && !isLoading && !isPdfDownloading && storyData?.id !== "" && !([sessionFlowName.GuestMiStory].includes(storageFlow) && accessToken) && (
             <>
-              {(() => {
-                const postChatConfig = getPostChatConfig(storageFlow);
-                return postChatConfig.allowImageUpload;
-              })() && (
+              {getPostChatConfigValue("allowImageUpload") && (
                 <div className="div13">
                   <ChatMessage
                     botNameToDisplay={botNameToDisplay}
@@ -2844,8 +2853,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
                           handleMultipleUploads(e, storyData);
                         }}
                         onClick={e => {
-                          const postChatConfig = getPostChatConfig(storageFlow);
-                          const uploadLimit = postChatConfig.imageUploadLimit;
+                          const uploadLimit = getPostChatConfigValue("imageUploadLimit");
                           if (files?.length >= uploadLimit) {
                             setFileErrorText(fileExceedText);
                           } else {
@@ -2917,36 +2925,29 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
                   chatId={"download-story-id"}
                   isStaticMessage={true}
                 />
-                {!projectId &&
-                  (() => {
-                    const postChatConfig = getPostChatConfig(storageFlow);
-                    return postChatConfig.displayDownloadStory;
-                  })() && (
-                    <div className="div20">
-                      <button
-                        className="clickable-button"
-                        onClick={() => {
-                          if (sessionId) {
-                            pdfDownloadSidebar(sessionId);
-                          }
-                        }}
-                        disabled={isLoading || isPdfDownloading}
-                      >
-                        <div className="download-story-div">
-                          <FiDownload className="icon-1" />
-                          <span className="div16" ref={endPageToScrollRef}>
-                            {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
-                          </span>
-                        </div>
-                      </button>
+                {!projectId && getPostChatConfigValue("displayDownloadStory") && (
+                  <div className="div20">
+                    <button
+                      className="clickable-button"
+                      onClick={() => {
+                        if (sessionId) {
+                          pdfDownloadSidebar(sessionId);
+                        }
+                      }}
+                      disabled={isLoading || isPdfDownloading}
+                    >
+                      <div className="download-story-div">
+                        <FiDownload className="icon-1" />
+                        <span className="div16" ref={endPageToScrollRef}>
+                          {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
+                        </span>
+                      </div>
+                    </button>
 
-                      {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
-                    </div>
-                  )}
-                {(() => {
-                  const postChatConfig = getPostChatConfig(storageFlow);
-                  return postChatConfig.displayEditStory;
-                })() && (
+                    {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
+                  </div>
+                )}
+                {getPostChatConfigValue("displayEditStory") && (
                   <div className="div20">
                     <button className="clickable-button" onClick={openModal} disabled={isLoading || isPdfDownloading}>
                       <div className="download-story-div">
