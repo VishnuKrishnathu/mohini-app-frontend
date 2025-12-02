@@ -66,6 +66,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: true,
       imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -76,6 +77,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: false,
       imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -86,6 +88,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: false,
       imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -96,6 +99,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: false,
       imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -106,6 +110,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: true,
       imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -116,6 +121,7 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: true,
       imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
       displayDownloadStory: true,
     },
@@ -190,12 +196,13 @@ export const processStringSubstitution = (text, obj) => {
  * @returns {Object} The postChatConfig object with default values if not found
  * @example
  * getPostChatConfig(sessionFlowName.GuestDiscussion)
- * // Returns: { allowImageUpload: false, imageUploadLimit: 0, displayEditStory: true, displayDownloadStory: true }
+ * // Returns: { allowImageUpload: false, imageUploadLimit: 0, maxImageSize: 52428800, displayEditStory: true, displayDownloadStory: true }
  */
 export const getPostChatConfig = flowName => {
   const defaultConfig = {
     allowImageUpload: false,
     imageUploadLimit: 0,
+    maxImageSize: 2 * 1024 * 1024, // 2MB in bytes (default fallback)
     displayEditStory: true,
     displayDownloadStory: true,
   };
@@ -208,4 +215,42 @@ export const getPostChatConfig = flowName => {
     ...defaultConfig,
     ...FLOW_CONFIG_V2[flowName].postChatConfig,
   };
+};
+
+/**
+ * Updates postChatConfig with values from backend API response
+ * @param {string} flowName - The name of the flow
+ * @param {Object} apiConfig - API response containing max_images and image_size
+ * @returns {void}
+ * @example
+ * updatePostChatConfigFromAPI('guest-discussion', { max_images: 5, image_size: 5242880 })
+ */
+export const updatePostChatConfigFromAPI = (flowName, apiConfig) => {
+  if (!flowName || !FLOW_CONFIG_V2[flowName] || !apiConfig) {
+    return;
+  }
+
+  // Update the config with API values
+  if (apiConfig.max_images !== undefined) {
+    FLOW_CONFIG_V2[flowName].postChatConfig.imageUploadLimit = apiConfig.max_images;
+  }
+
+  if (apiConfig.image_size !== undefined) {
+    FLOW_CONFIG_V2[flowName].postChatConfig.maxImageSize = apiConfig.image_size;
+  }
+
+  // Store the full API response for reference (optional)
+  FLOW_CONFIG_V2[flowName].postChatConfig._apiConfig = {
+    ...apiConfig,
+    fetchedAt: new Date().toISOString(),
+  };
+};
+
+/**
+ * Get human-friendly image size in MB
+ * @param {number} bytes - Size in bytes
+ * @returns {number} Size in MB rounded to 1 decimal place
+ */
+export const bytesToMB = bytes => {
+  return Math.round((bytes / (1024 * 1024)) * 10) / 10;
 };
