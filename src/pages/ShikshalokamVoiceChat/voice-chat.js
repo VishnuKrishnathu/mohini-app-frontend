@@ -1,64 +1,66 @@
-import "../../style.css";
-import "./shikshaChatStyle.css";
-import { AiOutlineEye } from "react-icons/ai";
-import { BiLoader } from "react-icons/bi";
-import { bot_routes } from "../../configure";
-import { buildWebSocketUrl } from "utils/helpers";
-import { clearFromStorage, handleS3Upload } from "../../services/storage_service";
-import { createMessage } from "../interview-voice";
-import { createStoryMediaApi, getStoryAllMedia, partialUpdateStoryById } from "api/endpoints/story";
-import { createUserProfileApi, getProfileUserApi } from "api/endpoints/user";
-import { FiDownload } from "react-icons/fi";
-import { getChatSessionApi } from "api/endpoints/chat";
-import { getCompanyBotApi } from "api/endpoints/chat";
-import { getSessionDetails } from "../../services/api.service";
-import { getStoryBySessionAPI } from "api/endpoints";
-import { getTranslatedIntroMessageApi } from "api/endpoints/ai";
-import { GrGallery } from "react-icons/gr";
-import { HiMiniSpeakerWave, HiMiniSpeakerXMark } from "react-icons/hi2";
-import { LANGUAGE_ENUMS, languageList, sessionFlowName } from "./enum";
-import { MdAccountCircle, MdEdit } from "react-icons/md";
-import { RxCross2 } from "react-icons/rx";
-import { setLanguage } from "../../i18n";
-import { TbReload } from "react-icons/tb";
-import { toast } from "react-toastify";
-import { updateReflectionStatusApi, getAI4BharatAudioApi, ai4BharatASRApi } from "api/endpoints";
-import { updateStoryMediaApi } from "api/endpoints";
-import { useAudio } from "hooks/useAudio";
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { useChatDataSessionStore } from "store";
-import { useChatStorage, useUserStorage, useSiteStorage } from "hooks/useStorage";
-import { useChatWebhook } from "hooks/useChatWebhook";
-import { useConfirmationPopup } from "hooks/useConfirmationPopup";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSiteDataLocalStore } from "store";
-import { useTranslation } from "react-i18next";
-import axiosInstance from "../../utils/axios";
-import Cookies from "universal-cookie";
-import CustomFormData from "../../components/Form/FormData";
-import DOMPurify from "dompurify";
-import EditorJS from "@editorjs/editorjs";
-import env from "../../utils/env";
-import Header from "@editorjs/header";
-import InfiniteScroll from "react-infinite-scroll-component";
-import List from "@editorjs/list";
-import MainHeader from "./shikshaChatHeader";
-import Notification, { showNotification } from "../../components/ToastMessage/TotastMessage";
-import PdfDownloader from "../story/upload-content/pdfDownloader";
-import PrivacyPolicyPopup from "../../components/TnC/privacyPolicyPopup";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import remarkGfm from "remark-gfm";
-import ReportEditor from "components/ReportEditor";
-import ROUTES from "../../url";
-import Sidebar from "./shikshaChatSidebar";
-import UploadImages from "./upload-images";
-import useCustomMediaQuery from "hooks/useCustomMediaQuery";
-import useSmartChatStorage from "hooks/useSmartChatStorage";
-import useUserDataLocalStore from "store/slices/userData/userDataLocal";
-import useVoiceRecord, { default_wave_surfer_config } from "../interview-text-voice/useVoiceRecord";
-import VoiceTextInput from "../../components/VoiceTextInput";
-import WaveSurferPlayer from "../interview-text-voice/voice-player";
+import "../../style.css"
+import "./shikshaChatStyle.css"
+import { AiOutlineEye } from "react-icons/ai"
+import { BiLoader } from "react-icons/bi"
+import { bot_routes } from "../../configure"
+import { buildWebSocketUrl } from "utils/helpers"
+import { clearFromStorage, handleS3Upload } from "../../services/storage_service"
+import { createMessage } from "../interview-voice"
+import { createStoryMediaApi, getStoryAllMedia, partialUpdateStoryById } from "api/endpoints/story"
+import { createUserProfileApi, getProfileUserApi } from "api/endpoints/user"
+import env from "../../utils/env"
+import { FaCircle } from "react-icons/fa6"
+import { FaMicrophone, FaRegStopCircle } from "react-icons/fa"
+import { FiDownload } from "react-icons/fi"
+import { getChatSessionApi } from "api/endpoints/chat"
+import { getCompanyBotApi } from "api/endpoints/chat"
+import { getSessionDetails } from "../../services/api.service"
+import { getStoryBySessionAPI } from "api/endpoints"
+import { getTranslatedIntroMessageApi } from "api/endpoints/ai"
+import { GrGallery } from "react-icons/gr"
+import { HiMiniSpeakerWave, HiMiniSpeakerXMark } from "react-icons/hi2"
+import { LANGUAGE_ENUMS, languageList, sessionFlowName } from "./enum"
+import { MdAccountCircle, MdEdit, MdSend } from "react-icons/md"
+import { RxCross2 } from "react-icons/rx"
+import { setLanguage } from "../../i18n"
+import { TbReload } from "react-icons/tb"
+import { toast } from "react-toastify"
+import { updateReflectionStatusApi, getAI4BharatAudioApi, ai4BharatASRApi } from "api/endpoints"
+import { updateStoryMediaApi } from "api/endpoints"
+import { useAudio } from "hooks/useAudio"
+import { useCallback, useEffect, useRef, useState, useMemo } from "react"
+import { useChatDataSessionStore } from "store"
+import { useChatStorage, useUserStorage, useSiteStorage } from "hooks/useStorage"
+import { useChatWebhook } from "hooks/useChatWebhook"
+import { useConfirmationPopup } from "hooks/useConfirmationPopup"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { useSiteDataLocalStore } from "store"
+import { useTranslation } from "react-i18next"
+import axiosInstance from "../../utils/axios"
+import Cookies from "universal-cookie"
+import CustomFormData from "../../components/Form/FormData"
+import DOMPurify from "dompurify"
+import EditorJS from "@editorjs/editorjs"
+import Header from "@editorjs/header"
+import InfiniteScroll from "react-infinite-scroll-component"
+import List from "@editorjs/list"
+import MainHeader from "./shikshaChatHeader"
+import Notification, { showNotification } from "../../components/ToastMessage/TotastMessage"
+import PdfDownloader from "../story/upload-content/pdfDownloader"
+import PrivacyPolicyPopup from "../../components/TnC/privacyPolicyPopup"
+import ReactMarkdown from "react-markdown"
+import rehypeRaw from "rehype-raw"
+import remarkGfm from "remark-gfm"
+import ReportEditor from "components/ReportEditor"
+import ROUTES from "../../url"
+import Sidebar from "./shikshaChatSidebar"
+import UploadImages from "./upload-images"
+import useCustomMediaQuery from "hooks/useCustomMediaQuery"
+import useSmartChatStorage from "hooks/useSmartChatStorage"
+import useUserDataLocalStore from "store/slices/userData/userDataLocal"
+import useVoiceRecord, { default_wave_surfer_config } from "../interview-text-voice/useVoiceRecord"
+import WaveSurferPlayer from "../interview-text-voice/voice-player"
+import Swal from "sweetalert2"
 
 const cookies = new Cookies();
 
@@ -68,54 +70,55 @@ const wss_protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 
 const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   // ========== useState Hooks ==========
-  const [storyMediaIdArray] = useState(null);
-  const [textMessage, setTextMessage] = useState("");
-  const [asrAudio, setAsrAudio] = useState(null);
-  const [isFetchingData, setIsFetchingData] = useState(false);
-  const [reconText, setReconText] = useState("");
-  const [isStreamingComplete, setIsStreamingComplete] = useState(true);
-  const [audioCache, setAudioCache] = useState({});
-  const [isPdfDownloading, setIsPdfDownloading] = useState(false);
-  const [editor, setEditor] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [editorCopyChanges, setEditorCopyChanges] = useState(null);
-  const [hasStartedListening, setHasStartedListening] = useState(false);
-  const [trigger, setTrigger] = useState(false);
-  const [botNameToDisplay, setBotNameToDisplay] = useState("Bot");
-  const [hasStartedRecording, setHasStartedRecording] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [sentences, setSentences] = useState([]);
-  const [isNextAllowed, setIsNextAllowed] = useState(true);
-  const [isMute, setNotMute] = useState(true);
-  const [isTalking, setTalking] = useState(0);
-  const [appendix, setAppendix] = useState([]);
-  const [hasOverRideId, setHasOverRideId] = useState(null);
-  const [shouldFetchIntro, setShouldFetchIntro] = useState(false);
-  const [hasFetchIntro, setHasFetchIntro] = useState(false);
-  const [chatTitle, setChatTitle] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isImageUploading, setIsImageUploading] = useState(false);
-  const [isIntroLoading, setIsIntroLoading] = useState(false);
-  const [isFetchingOldIntro, setIsFetchingOldIntro] = useState(false);
-  const [sessionTitleDetail, setSessionTitleDetail] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isResetCalled, setIsResetCalled] = useState(false);
-  const [strandStep, setStrandStep] = useState(null);
-  const [isEndStoryLoading, setIsEndStoryLoading] = useState(false);
-  const [storyData, setStoryData] = useState(null);
-  const [noStoryFound, setNoStoryFound] = useState(false);
-  const [triggerDownload, setTriggerDownload] = useState(false);
-  const [isRecognizing, setIsRecognizing] = useState(false);
-  const [shouldSendMessage] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [intervalId, setIntervalId] = useState(null);
-  const [ssoNavigationTriggered, setSsoNavigationTriggered] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [fileErrorText, setFileErrorText] = useState("");
-  const [companySlug, setCompanySlug] = useState("");
-  const [error, setError] = useState({ response: "", status: 200 });
-  const [visibleItemCount, setVisibleItemCount] = useState(10);
+  const [storyMediaIdArray] = useState(null)
+  const [textMessage, setTextMessage] = useState("")
+  const [asrAudio, setAsrAudio] = useState(null)
+  const [isFetchingData, setIsFetchingData] = useState(false)
+  const [reconText, setReconText] = useState("")
+  const [isStreamingComplete, setIsStreamingComplete] = useState(true)
+  const [audioCache, setAudioCache] = useState({})
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false)
+  const [editor, setEditor] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [editorCopyChanges, setEditorCopyChanges] = useState(null)
+  const [hasStartedListening, setHasStartedListening] = useState(false)
+  const [trigger, setTrigger] = useState(false)
+  const [botNameToDisplay, setBotNameToDisplay] = useState("Bot")
+  const [hasStartedRecording, setHasStartedRecording] = useState(false)
+  const [mediaRecorder, setMediaRecorder] = useState(null)
+  const [sentences, setSentences] = useState([])
+  const [isNextAllowed, setIsNextAllowed] = useState(true)
+  const [isMute, setNotMute] = useState(true)
+  const [isTalking, setTalking] = useState(0)
+  const [appendix, setAppendix] = useState([])
+  const [hasOverRideId, setHasOverRideId] = useState(null)
+  const [shouldFetchIntro, setShouldFetchIntro] = useState(false)
+  const [hasFetchIntro, setHasFetchIntro] = useState(false)
+  const [chatTitle, setChatTitle] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isImageUploading, setIsImageUploading] = useState(false)
+  const [isIntroLoading, setIsIntroLoading] = useState(false)
+  const [isFetchingOldIntro, setIsFetchingOldIntro] = useState(false)
+  const [sessionTitleDetail, setSessionTitleDetail] = useState(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isResetCalled, setIsResetCalled] = useState(false)
+  const strandStep = useChatDataSessionStore(state => state.strandStep)
+  const setStrandStep = useChatDataSessionStore(state => state.setStrandStep)
+  const [isEndStoryLoading, setIsEndStoryLoading] = useState(false)
+  const [storyData, setStoryData] = useState(null)
+  const [noStoryFound, setNoStoryFound] = useState(false)
+  const [triggerDownload, setTriggerDownload] = useState(false)
+  const [isRecognizing, setIsRecognizing] = useState(false)
+  const [shouldSendMessage] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [seconds, setSeconds] = useState(0)
+  const [intervalId, setIntervalId] = useState(null)
+  const [ssoNavigationTriggered, setSsoNavigationTriggered] = useState(false)
+  const [files, setFiles] = useState([])
+  const [fileErrorText, setFileErrorText] = useState("")
+  const [companySlug, setCompanySlug] = useState("")
+  const [error, setError] = useState({ response: "", status: 200 })
+  const [visibleItemCount, setVisibleItemCount] = useState(10)
   // const [showHomepage, setShowHomepage] = useState(true)
   // const [isReconnectInProgress, setIsReconnectInProgress] = useState(false);
   // const [reconnectAttempts, setReconnectAttempts] = useState(0);
@@ -253,9 +256,9 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   const projectId = useMemo(() => projectIdStore || searchParams.get("projectId"), [projectIdStore, searchParams]);
 
   const isSpecialFlow = useMemo(() => {
-    if (!storageFlow) return false;
-    return [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory].includes(storageFlow);
-  }, [storageFlow]);
+    if (!storageFlow) return false
+    return [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.ParentPerceptionSurvey].includes(storageFlow)
+  }, [storageFlow])
 
   const shouldFetchChatSession = useMemo(() => {
     return storageFlow && [sessionFlowName.Reflection].includes(storageFlow);
@@ -859,10 +862,10 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   useEffect(() => {
     const currentFlow = storageFlow;
     const handleBack = () => {
-      console.log("History length:", window.history.length);
-      console.log("Can go back 1?", window.history.length > 1);
-      console.log("Can go back 3?", window.history.length > 3);
-      if ((acceptedTnc || acceptedTnc === "ONGOING") && currentFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.SsoFlow].includes(currentFlow)) {
+      console.log("History length:", window.history.length)
+      console.log("Can go back 1?", window.history.length > 1)
+      console.log("Can go back 3?", window.history.length > 3)
+      if ((acceptedTnc || acceptedTnc === "ONGOING") && currentFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.SsoFlow, sessionFlowName.ParentPerceptionSurvey].includes(currentFlow)) {
         if (ssoNavigationTriggered && accessToken) {
           console.log("isnide navigate happens");
           navigate(-2);
@@ -1207,20 +1210,55 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
    * Calls end-story API when all state machine steps complete
    */
   useEffect(() => {
+    if (storageFlow && [sessionFlowName.ParentPerceptionSurvey].includes(storageFlow)) {
+      return;
+    }
     if (isStreamingComplete && stateMachineLength && strandStep >= stateMachineLength && noStoryFound && (!llmError || llmError === "") && acceptedTnc && acceptedTnc !== "ONGOING") {
       callEndStory();
     }
-  }, [isStreamingComplete, strandStep, accessToken, stateMachineLength, languageToUse, noStoryFound]);
+  }, [isStreamingComplete, strandStep, accessToken, stateMachineLength, languageToUse, noStoryFound, storageFlow])
+
+  useEffect(() => {
+    const isLastMessageFromBot = chatHistory.length > 0 && chatHistory[chatHistory.length - 1]?.source === "bot";
+    if (
+      storageFlow && 
+      [sessionFlowName.ParentPerceptionSurvey].includes(storageFlow) &&
+      isStreamingComplete && 
+      stateMachineLength && 
+      strandStep >= stateMachineLength &&
+      isLastMessageFromBot
+    ) {
+      Swal.fire({
+        title: t("ptmCompletionMessage"),
+        showCancelButton: false,
+        confirmButtonText: t("ptmCompletionCTA"),
+        showCloseButton: false,
+        allowEscapeKey: false,
+        allowOutsideClick: false,
+        imageUrl: "https://static-media.gritworks.ai/fe-images/PNG/Shikshalokam/check-mark.png",
+        imageHeight: "100",
+      }).then(result => {
+        if (result.isConfirmed) {
+          clearFromStorage();
+          setLanguage(LANGUAGE_ENUMS.ENGLISH);
+          setChatLanguage(LANGUAGE_ENUMS.ENGLISH);
+          setHasSelectedLanguage(false);
+          stopAllAudio();
+          navigate(-2);
+        }
+      });
+    }
+  }, [isStreamingComplete, strandStep, stateMachineLength, storageFlow, chatHistory]);
 
   /**
    * Display chat session titles for guest users after delay
    * Shows available chat sessions in sidebar with loading state
    */
   useEffect(() => {
-    const currentFlow = storageFlow;
-    if (profileToUse && !accessToken && !isEndStoryLoading && ![sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory].includes(currentFlow)) {
-      console.log("setting loading to true", "state_tracker");
-      setIsLoading(true);
+    const currentFlow = storageFlow
+    if (profileToUse && !accessToken && !isEndStoryLoading && ![sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.ParentPerceptionSurvey].includes(currentFlow)) {
+      console.log("setting loading to true", "state_tracker")
+      setIsLoading(true)
       const titleTime = setTimeout(() => {
         if (shouldShowChatHistoryFeature) showChatTitle();
       }, 4000);
@@ -1229,10 +1267,10 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
         if (!noStoryFound) {
           setIsLoading(false);
         }
-        clearTimeout(titleTime);
-      };
-    } else if (!isEndStoryLoading && ![sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory].includes(currentFlow)) {
-      setIsLoading(false);
+        clearTimeout(titleTime)
+      }
+    } else if (!isEndStoryLoading && ![sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.ParentPerceptionSurvey].includes(currentFlow)) {
+      setIsLoading(false)
     }
   }, [profileToUse, accessToken, isEndStoryLoading, noStoryFound]);
 
@@ -1390,7 +1428,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     } else if ((noStoryFound || noStoryFound === null) && !isIntroLoading && !isLoading && !isEndStoryLoading) {
       const currentFlow = storageFlow;
 
-      if (currentFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory].includes(currentFlow)) {
+      if (currentFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.ListeningActivity, sessionFlowName.GuestMiStory, sessionFlowName.ParentPerceptionSurvey].includes(currentFlow)) {
         if (chatHistory.length > 0) {
           if (isStreamingComplete && chatHistory[chatHistory.length - 1]?.source === "bot") {
             shouldPlay = true;
@@ -1840,20 +1878,20 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     if (rerouteUrl && rerouteUrl !== null && rerouteUrl !== undefined && rerouteUrl !== "") {
       window.location.href = rerouteUrl;
     } else {
-      window.location.href = "https://www.google.com";
+      window.location.replace("https://www.google.com")
     }
   };
 
   function navigateSsoFlow(rerouteURL) {
     // navigate(-2)
-    console.log("rerouteURL", rerouteURL);
-    if (rerouteURL) {
-      clearFromStorage();
-      window.location.href = rerouteURL;
-    } else {
-      console.log("navigating -2");
-      navigate(-2);
-    }
+    // console.log("rerouteURL", rerouteURL)
+    // if (rerouteURL) {
+    //   clearFromStorage()
+    //   window.location.replace(rerouteURL)
+    // } else {
+    console.log("navigating -2")
+    navigate(-2)
+    // }
   }
 
   function stayOnPage() {
@@ -2006,21 +2044,21 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     if (e) {
       e.preventDefault();
     }
-    setIsLoading(true);
-    setIsIntroLoading(true);
-    removeChatHistory();
-    setIsOldChatOpen(false);
-    setIsNewChatOpen(true);
-    setShowFileInput(false);
-    setLlmError("");
-    setSessionId(null);
-
-    const session = await getSessionDetails();
-    setSessionId(session.sessionid);
-    setIsChatVisible(false);
-    setChatbotClickedOn("");
-    setShowHomepage(true);
-    setIsLoading(false);
+    setIsLoading(true)
+    setIsIntroLoading(true)
+    removeChatHistory()
+    setIsOldChatOpen(false)
+    setIsNewChatOpen(true)
+    setShowFileInput(false)
+    setLlmError("")
+    setSessionId(null)
+    setStrandStep(null)
+    const session = await getSessionDetails()
+    setSessionId(session.sessionid)
+    setIsChatVisible(false)
+    setChatbotClickedOn("")
+    setShowHomepage(true)
+    setIsLoading(false)
 
     window.location.reload();
   }
@@ -2053,7 +2091,8 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
       [sessionFlowName.GuestDiscussion]: bot_routes.shikshalokam_chaupal,
       [sessionFlowName.LoginDiscussion]: bot_routes.shikshalokam_chaupal,
       [sessionFlowName.ListeningActivity]: bot_routes.listening_activity,
-    };
+      [sessionFlowName.ParentPerceptionSurvey]: bot_routes.parent_perception_survey,
+    }
 
     const typeBasedRouteMap = {
       normal: {
@@ -2823,7 +2862,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
           )}
           {isStreamingComplete && showFileInput && !showHomepage && !isEndStoryLoading && !isLoading && !isPdfDownloading && storyData?.id !== "" && !([sessionFlowName.GuestMiStory].includes(storageFlow) && accessToken) && (
             <>
-              {![sessionFlowName.ListeningActivity].includes(storageFlow) && (
+              {![sessionFlowName.ListeningActivity, sessionFlowName.ParentPerceptionSurvey].includes(storageFlow) && (
                 <div className="div13">
                   <ChatMessage
                     botNameToDisplay={botNameToDisplay}
@@ -2912,81 +2951,83 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
                 </div>
               )}
 
-              <div className="div19">
-                <ChatMessage
-                  botNameToDisplay={botNameToDisplay}
-                  userType="bot"
-                  message={storageFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.LoginDiscussion].includes(storageFlow) ? t("reportText") : storageFlow && [sessionFlowName.ListeningActivity].includes(storageFlow) ? t("reportFeedbackText") : t("storyText")}
-                  isTalking={false}
-                  handleOnStopSpeaking={() => handleOnStopSpeaking()}
-                  handleOnSpeaking={(message, updatedAt, staticMessage) => {
-                    const message_to_use = storageFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.LoginDiscussion].includes(storageFlow) ? t("reportText") : storageFlow && [sessionFlowName.ListeningActivity].includes(storageFlow) ? t("reportFeedbackText") : t("storyText");
-                    console.log("message_to_use", message_to_use);
-                    handleOnSpeaking(message_to_use, "download-story-id", { msg: message_to_use, updated_at: "download-story-id", source: "bot" });
-                  }}
-                  isAnyPlaying={!!hasOverRideId || isTalking}
-                  isPlaying={hasOverRideId === "download-story-id"}
-                  isStreamingComplete={isStreamingComplete}
-                  setNotMute={setNotMute}
-                  chatId={"download-story-id"}
-                  isStaticMessage={true}
-                />
-                {!projectId && (
-                  <div className="div20">
-                    <button
-                      className="clickable-button"
-                      onClick={() => {
-                        if (sessionId) {
-                          pdfDownloadSidebar(sessionId);
-                        }
-                      }}
-                      disabled={isLoading || isPdfDownloading}
-                    >
-                      <div className="download-story-div">
-                        <FiDownload className="icon-1" />
-                        <span className="div16" ref={endPageToScrollRef}>
-                          {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
-                        </span>
-                      </div>
-                    </button>
+              {![sessionFlowName.ParentPerceptionSurvey].includes(storageFlow) && (
+                <div className="div19">
+                  <ChatMessage
+                    botNameToDisplay={botNameToDisplay}
+                    userType="bot"
+                    message={storageFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.LoginDiscussion].includes(storageFlow) ? t("reportText") : storageFlow && [sessionFlowName.ListeningActivity].includes(storageFlow) ? t("reportFeedbackText") : t("storyText")}
+                    isTalking={false}
+                    handleOnStopSpeaking={() => handleOnStopSpeaking()}
+                    handleOnSpeaking={(message, updatedAt, staticMessage) => {
+                      const message_to_use = storageFlow && [sessionFlowName.GuestDiscussion, sessionFlowName.LoginDiscussion].includes(storageFlow) ? t("reportText") : storageFlow && [sessionFlowName.ListeningActivity].includes(storageFlow) ? t("reportFeedbackText") : t("storyText")
+                      console.log("message_to_use", message_to_use)
+                      handleOnSpeaking(message_to_use, "download-story-id", { msg: message_to_use, updated_at: "download-story-id", source: "bot" })
+                    }}
+                    isAnyPlaying={!!hasOverRideId || isTalking}
+                    isPlaying={hasOverRideId === "download-story-id"}
+                    isStreamingComplete={isStreamingComplete}
+                    setNotMute={setNotMute}
+                    chatId={"download-story-id"}
+                    isStaticMessage={true}
+                  />
+                  {!projectId && (
+                    <div className="div20">
+                      <button
+                        className="clickable-button"
+                        onClick={() => {
+                          if (sessionId) {
+                            pdfDownloadSidebar(sessionId)
+                          }
+                        }}
+                        disabled={isLoading || isPdfDownloading}
+                      >
+                        <div className="download-story-div">
+                          <FiDownload className="icon-1" />
+                          <span className="div16" ref={endPageToScrollRef}>
+                            {storageFlow && !accessToken ? t("downloadReportText") : t("downloadStoryText")}
+                          </span>
+                        </div>
+                      </button>
 
-                    {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
-                  </div>
-                )}
-                <div className="div20">
-                  <button className="clickable-button" onClick={openModal} disabled={isLoading || isPdfDownloading}>
-                    <div className="download-story-div">
-                      <MdEdit className="icon-1" />
-                      <span className="div16" ref={endPageToScrollRef}>
-                        {storageFlow && !accessToken ? t("editReportText") : t("editStoryText")}
-                      </span>
+                      {triggerDownload && isPdfDownloading && !isLoading && downloadPdf()}
                     </div>
-                  </button>
-                </div>
-                {projectId && (
+                  )}
                   <div className="div20">
-                    <button
-                      className="clickable-button"
-                      onClick={async () => {
-                        if (projectId) {
-                          setIsLoading(true);
-                          await updateReflectionStatusApi(projectId, "completed", storageFlow, accessToken);
-                        } else {
-                          window.location.reload();
-                        }
-                      }}
-                      disabled={isLoading || isPdfDownloading}
-                    >
+                    <button className="clickable-button" onClick={openModal} disabled={isLoading || isPdfDownloading}>
                       <div className="download-story-div">
-                        <AiOutlineEye className="icon-1" />
+                        <MdEdit className="icon-1" />
                         <span className="div16" ref={endPageToScrollRef}>
-                          {t("viewStoryText")}
+                          {storageFlow && !accessToken ? t("editReportText") : t("editStoryText")}
                         </span>
                       </div>
                     </button>
                   </div>
-                )}
-              </div>
+                  {projectId && (
+                    <div className="div20">
+                      <button
+                        className="clickable-button"
+                        onClick={async () => {
+                          if (projectId) {
+                            setIsLoading(true)
+                            await updateReflectionStatusApi(projectId, "completed", storageFlow, accessToken)
+                          } else {
+                            window.location.reload()
+                          }
+                        }}
+                        disabled={isLoading || isPdfDownloading}
+                      >
+                        <div className="download-story-div">
+                          <AiOutlineEye className="icon-1" />
+                          <span className="div16" ref={endPageToScrollRef}>
+                            {t("viewStoryText")}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
           {llmError && llmError !== "" && (
