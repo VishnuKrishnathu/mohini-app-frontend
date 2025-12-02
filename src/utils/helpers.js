@@ -1,10 +1,8 @@
 // utils/helpers.js
 import { languageList } from "../pages/ShikshalokamVoiceChat/enum";
 import { STORAGE_KEYS } from "./constants";
-import { sessionFlowName } from "../pages/ShikshalokamVoiceChat/enum";
-import { bot_websocket } from "configure";
 import env from "./env";
-import { getRouteFromSession } from "../config/flowConfig";
+import { getWebSocketUrlFromSession } from "../config/flowConfig";
 
 /**
  * Get default language based on use case type
@@ -64,37 +62,6 @@ export function buildWebSocketUrl({ searchParams, storageFlow, selectedType, wss
   }
 
   const baseUrl = `${wssProtocol}${env.WEBSOCKET_HOST()}`;
-  // const currentFlow = storageFlow;
 
-  // // Direct flow to websocket mapping
-  // const websocketConfig = {
-  //   [sessionFlowName.GuestDiscussion]: bot_websocket.shikshalokam_chaupal,
-  //   [sessionFlowName.LoginDiscussion]: bot_websocket.shikshalokam_chaupal,
-  //   [sessionFlowName.ListeningActivity]: bot_websocket.listening_activity,
-  // };
-
-  // // Type-based flow to websocket mapping
-  // const normalTypeConfig = {
-  //   normal: {
-  //     [sessionFlowName.LoginMiStory]: bot_websocket.normal,
-  //     [sessionFlowName.GuestMiStory]: bot_websocket.guest_normal,
-  //   },
-  //   oneshot: {
-  //     [sessionFlowName.LoginMiStory]: bot_websocket.oneshot,
-  //     [sessionFlowName.GuestMiStory]: bot_websocket.guest_oneshot,
-  //   },
-  // };
-
-  // Check direct flow mapping first
-  // if (websocketConfig[currentFlow]) {
-  //   return `${baseUrl}${websocketConfig[currentFlow]}`;
-  // }
-
-  // // Check type-based mapping
-  // const selectedTypeConfig = normalTypeConfig[selectedType];
-  // if (selectedTypeConfig && selectedTypeConfig[currentFlow]) {
-  //   return `${baseUrl}${selectedTypeConfig[currentFlow]}`;
-  // }
-
-  return `${baseUrl}${getRouteFromSession(storageFlow, selectedType)}`;
+  return `${baseUrl}${getWebSocketUrlFromSession(storageFlow, selectedType)}`;
 }

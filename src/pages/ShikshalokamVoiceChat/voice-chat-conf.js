@@ -64,8 +64,8 @@ import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringS
 const cookies = new Cookies();
 
 // TODO: After testing, revert this to the original code
-// const wss_protocol = window.location.protocol === "https:" ? "wss://" : "ws://"
-const wss_protocol = "wss://";
+const wss_protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+// const wss_protocol = "wss://";
 
 const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   // ========== useState Hooks ==========
@@ -201,6 +201,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     if (message.source === "bot") {
       setIsStreamingComplete(false);
       setSentences(prevSentences => {
+        console.log("prevSentences", prevSentences);
         const updatedSentences = [...prevSentences];
         const lastSentence = updatedSentences[updatedSentences.length - 1];
 
