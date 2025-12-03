@@ -141,12 +141,12 @@ export const FLOW_TO_ROUTE_MAP = {
 };
 
 export const FLOW_TO_WEBSOCKET_MAP = {
-  [sessionFlowName.GuestDiscussion]: bot_routes.shikshalokam_chaupal,
-  [sessionFlowName.LoginDiscussion]: bot_routes.shikshalokam_chaupal,
-  [sessionFlowName.ListeningActivity]: bot_routes.listening_activity,
+  [sessionFlowName.GuestDiscussion]: bot_websocket.shikshalokam_chaupal,
+  [sessionFlowName.LoginDiscussion]: bot_websocket.shikshalokam_chaupal,
+  [sessionFlowName.ListeningActivity]: bot_websocket.listening_activity,
   [sessionFlowName.GuestMiStory]: {
-    normal: bot_routes.normal,
-    oneshot: bot_routes.oneshot,
+    normal: bot_websocket.normal,
+    oneshot: bot_websocket.oneshot,
   },
   [sessionFlowName.SchoolSurvey]: bot_websocket.listening_activity,
   [sessionFlowName.ParentPerceptionSurvey]: bot_websocket.parent_perception_survey,
@@ -165,7 +165,6 @@ export const getRouteFromSession = (sessionName, selectedType = undefined) => {
   if (selectedType && FLOW_TO_ROUTE_MAP[sessionName][selectedType]) return FLOW_TO_ROUTE_MAP[sessionName][selectedType];
   return bot_routes.reflection;
 };
-
 /**
  * Extracts variable placeholders from a string
  * @param {string} text - The text containing variable placeholders in the format {variableName}
