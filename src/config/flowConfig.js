@@ -66,7 +66,64 @@ export const FLOW_CONFIG_V2 = {
     postChatConfig: {
       allowImageUpload: true,
       imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
       displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.GuestDiscussion]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.LoginDiscussion]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.ListeningActivity]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: false,
+      imageUploadLimit: 0,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.GuestMiStory]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: true,
+      imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
+      displayEditStory: true,
+      displayDownloadStory: true,
+    },
+  },
+  [sessionFlowName.LoginMiStory]: {
+    chatHeading: "{homepageHeading}\n{homepageHeading1}",
+    chatDescription: `1. {homepageList}\n2. {homepageList1}\n3. {homepageList2}`,
+    postChatConfig: {
+      allowImageUpload: true,
+      imageUploadLimit: 10,
+      maxImageSize: 2 * 1024 * 1024, // 2MB default
+      displayEditStory: true,
+      displayDownloadStory: true,
     },
   },
 };
@@ -80,6 +137,7 @@ export const FLOW_TO_ROUTE_MAP = {
     oneshot: bot_routes.oneshot,
   },
   [sessionFlowName.SchoolSurvey]: bot_routes.shikshalokam_chaupal,
+  [sessionFlowName.ParentPerceptionSurvey]: bot_websocket.parent_perception_survey,
 };
 
 export const FLOW_TO_WEBSOCKET_MAP = {
@@ -90,7 +148,8 @@ export const FLOW_TO_WEBSOCKET_MAP = {
     normal: bot_websocket.normal,
     oneshot: bot_websocket.oneshot,
   },
-  [sessionFlowName.SchoolSurvey]: bot_websocket.shikshalokam_chaupal,
+  [sessionFlowName.SchoolSurvey]: bot_websocket.listening_activity,
+  [sessionFlowName.ParentPerceptionSurvey]: bot_websocket.parent_perception_survey,
 };
 
 export const getWebSocketUrlFromSession = (sessionName, selectedType = undefined) => {
@@ -128,4 +187,69 @@ export const getStringVariables = text => {
  */
 export const processStringSubstitution = (text, obj) => {
   return text.replace(/{(\w+)}/g, (match, key) => obj[key] || match);
+};
+
+/**
+ * Safely retrieves postChatConfig for a specific flow with default fallback values
+ * @param {string} flowName - The name of the flow (e.g., sessionFlowName.GuestDiscussion)
+ * @returns {Object} The postChatConfig object with default values if not found
+ * @example
+ * getPostChatConfig(sessionFlowName.GuestDiscussion)
+ * // Returns: { allowImageUpload: false, imageUploadLimit: 0, maxImageSize: 52428800, displayEditStory: true, displayDownloadStory: true }
+ */
+export const getPostChatConfig = flowName => {
+  const defaultConfig = {
+    allowImageUpload: false,
+    imageUploadLimit: 0,
+    maxImageSize: 2 * 1024 * 1024, // 2MB in bytes (default fallback)
+    displayEditStory: true,
+    displayDownloadStory: true,
+  };
+
+  if (!flowName || !FLOW_CONFIG_V2[flowName]) {
+    return defaultConfig;
+  }
+
+  return {
+    ...defaultConfig,
+    ...FLOW_CONFIG_V2[flowName].postChatConfig,
+  };
+};
+
+/**
+ * Updates postChatConfig with values from backend API response
+ * @param {string} flowName - The name of the flow
+ * @param {Object} apiConfig - API response containing max_images and image_size
+ * @returns {void}
+ * @example
+ * updatePostChatConfigFromAPI('guest-discussion', { max_images: 5, image_size: 5242880 })
+ */
+export const updatePostChatConfigFromAPI = (flowName, apiConfig) => {
+  if (!flowName || !FLOW_CONFIG_V2[flowName] || !apiConfig) {
+    return;
+  }
+
+  // Update the config with API values
+  if (apiConfig.max_images !== undefined) {
+    FLOW_CONFIG_V2[flowName].postChatConfig.imageUploadLimit = apiConfig.max_images;
+  }
+
+  if (apiConfig.image_size !== undefined) {
+    FLOW_CONFIG_V2[flowName].postChatConfig.maxImageSize = apiConfig.image_size;
+  }
+
+  // Store the full API response for reference (optional)
+  FLOW_CONFIG_V2[flowName].postChatConfig._apiConfig = {
+    ...apiConfig,
+    fetchedAt: new Date().toISOString(),
+  };
+};
+
+/**
+ * Get human-friendly image size in MB
+ * @param {number} bytes - Size in bytes
+ * @returns {number} Size in MB rounded to 1 decimal place
+ */
+export const bytesToMB = bytes => {
+  return Math.round((bytes / (1024 * 1024)) * 10) / 10;
 };

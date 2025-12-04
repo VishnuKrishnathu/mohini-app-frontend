@@ -48,6 +48,7 @@ const unprotected_old_routes = [
   { path: ROUTES.SHIKSHALOKAM_GUEST_LISTENING_CHAT, element: <ShikshalokamChat type={sessionFlowName.ListeningActivity} /> },
   { path: ROUTES.SHIKSHALOKAM_GUEST_MI_STORY, element: <ShikshalokamChat type={sessionFlowName.GuestMiStory} /> },
   { path: ROUTES.AP_SCHOOL_SURVEY, element: <ShikshalokamChat type={sessionFlowName.SchoolSurvey} /> },
+  { path: ROUTES.SHIKSHALOKAM_PPPI_VOICE_CHAT, element: <ShikshalokamChat type={sessionFlowName.ParentPerceptionSurvey} /> },
 
   // Unified PTM route
   { path: ROUTES.SHIKSHALOKAM_PTM_CHAT_PAGE, element: <UnifiedChat type={sessionFlowName.megaPTM} /> },

@@ -50,19 +50,6 @@ const FlowSelection = ({ audioRef, stopAudioTriggered, setStopAudioTriggered, on
               setStopAudioTriggered={setStopAudioTriggered}
               logo="https://s3.ap-south-1.amazonaws.com/static-media.gritworks.ai/fe-images/PNG/Shikshalokam/mi_story_capture_logo.png"
             />
-
-            <FlowOption
-              flowName={sessionFlowName.SchoolSurvey}
-              // selectedFlow={selectedFlow}
-              onSelect={setSelectedFlow}
-              buttonText={t("commonPageButtonText1")}
-              buttonId="capture-mi-story"
-              // userLanguage={userLanguage}
-              audioRef={audioRef}
-              stopAudioTriggered={stopAudioTriggered}
-              setStopAudioTriggered={setStopAudioTriggered}
-              logo="https://s3.ap-south-1.amazonaws.com/static-media.gritworks.ai/fe-images/PNG/Shikshalokam/mi_story_capture_logo.png"
-            />
           </div>
 
           {/* Continue Button */}

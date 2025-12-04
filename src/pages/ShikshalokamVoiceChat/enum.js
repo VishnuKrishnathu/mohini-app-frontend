@@ -19,9 +19,15 @@ export const LANGUAGE_ENUMS = {
 export const languageList = [
   { label: "English", value: "en", excludeFor: [] },
   { label: "हिंदी", value: "hi", excludeFor: [SESSION_USECASE_TYPE.MEGA_PTM, SESSION_USECASE_TYPE.YLC] },
-  { label: "ಕನ್ನಡ", value: "kn", excludeFor: [SESSION_USECASE_TYPE.MEGA_PTM, SESSION_USECASE_TYPE.ListeningActivity] },
-  { label: "తెలుగు", value: "te", excludeFor: [SESSION_USECASE_TYPE.ListeningActivity, SESSION_USECASE_TYPE.YLC] },
-]
+  { label: "ಕನ್ನಡ", value: "kn", excludeFor: [
+      SESSION_USECASE_TYPE.MEGA_PTM,  SESSION_USECASE_TYPE.ListeningActivity, SESSION_USECASE_TYPE.ParentPerceptionSurvey
+    ] 
+  },
+  { label: "తెలుగు", value: "te", excludeFor: [
+      SESSION_USECASE_TYPE.ListeningActivity, SESSION_USECASE_TYPE.YLC, SESSION_USECASE_TYPE.ParentPerceptionSurvey
+    ] 
+  },
+];
 
 export const sessionFlowName = {
   GuestDiscussion: "guest-discussion",
@@ -33,8 +39,8 @@ export const sessionFlowName = {
   megaPTM: "megaPTM",
   YLC: "YLC",
   ListeningActivity: "listening-activity",
-  SchoolSurvey: "school-survey",
-}
+  ParentPerceptionSurvey: "parent_perception_survey",
+};
 
 export const PTM_CONVERSATION_STATUS_TYPE = {
   COMPLETED: "COMPLETED",
