@@ -10,3 +10,4 @@ export * from "./ai";
 export * from "./story";
 export * from "./upload";
 export * from "./flowConfig";
+export * from "./flows";
