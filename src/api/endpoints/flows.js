@@ -1,4 +1,4 @@
-import { axiosInstance } from "../client";
+import axiosInstance from "../../utils/axios";
 
 /**
  * Fetch all available flows from the backend
