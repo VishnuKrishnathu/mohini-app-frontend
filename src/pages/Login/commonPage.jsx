@@ -79,7 +79,7 @@ function CommonHomePage({ usecaseType }) {
       setFlow(FLOW_MAP[usecaseType]);
       navigate(ROUTE_MAP[usecaseType]);
     }
-  }, []);
+  }, [hasSelectedLanguage, usecaseType]);
 
   // Process language selection
   useEffect(() => {
