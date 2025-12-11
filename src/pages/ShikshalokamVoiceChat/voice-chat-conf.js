@@ -60,7 +60,8 @@ import useUserDataLocalStore from "store/slices/userData/userDataLocal";
 import useVoiceRecord, { default_wave_surfer_config } from "../interview-text-voice/useVoiceRecord";
 import VoiceTextInput from "../../components/VoiceTextInput";
 import WaveSurferPlayer from "../interview-text-voice/voice-player";
-import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution, getPostChatConfig, updatePostChatConfigFromAPI, bytesToMB } from "../../config/flowConfig";
+import { FLOW_CONFIG_V2, getRouteFromSession, getStringVariables, processStringSubstitution, getPostChatConfig, updatePostChatConfigFromAPI, bytesToMB, isHardcodedFlow, getDynamicFlow, getWebSocketUrlFromDynamicFlow, getPostChatConfigFromDynamicFlow } from "../../config/flowConfig";
+import { getFlowByRoute } from "api/endpoints/flows";
 
 const cookies = new Cookies();
 
@@ -121,6 +122,11 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   // const [showHomepage, setShowHomepage] = useState(true)
   // const [isReconnectInProgress, setIsReconnectInProgress] = useState(false);
   // const [reconnectAttempts, setReconnectAttempts] = useState(0);
+
+  // ========== Dynamic Flow States ==========
+  const [isDynamicFlow, setIsDynamicFlow] = useState(false);
+  const [dynamicFlowData, setDynamicFlowData] = useState(null);
+  const [flowLoadError, setFlowLoadError] = useState(null);
 
   // ========== useRef Hooks ==========
   const lastBotMessageIndex = useRef(-1);
@@ -234,18 +240,30 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
     }
   }, []);
 
-  const { sendMessage: sendSocketMessage } = useChatWebhook(
-    buildWebSocketUrl({
+  // Determine WebSocket URL based on flow type (dynamic vs hardcoded)
+  // Use flow route as dependency to avoid reconnections when flow data changes
+  const websocketUrl = useMemo(() => {
+    // If using dynamic flow from backend, use its WebSocket URL
+    if (isDynamicFlow && dynamicFlowData?.websocket_url) {
+      const dynamicWsUrl = getWebSocketUrlFromDynamicFlow(dynamicFlowData);
+      if (dynamicWsUrl) {
+        return dynamicWsUrl;
+      }
+    }
+
+    // Fallback to hardcoded WebSocket URL
+    return buildWebSocketUrl({
       searchParams,
       storageFlow,
       selectedType,
       wssProtocol: wss_protocol,
-    }),
-    {
-      onOpen: onWebSocketOpen,
-      onMessage: onWebSocketMessage,
-    }
-  );
+    });
+  }, [isDynamicFlow, dynamicFlowData?.websocket_url, dynamicFlowData?.flow_route, searchParams, storageFlow, selectedType]);
+
+  const { sendMessage: sendSocketMessage } = useChatWebhook(websocketUrl, {
+    onOpen: onWebSocketOpen,
+    onMessage: onWebSocketMessage,
+  });
 
   const isShikshalokamPublicType = true;
   const shouldShowChatHistoryFeature = true;
@@ -265,7 +283,6 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   }, [storageFlow]);
 
   const isInitialising = useMemo(() => {
-    console.log("state_tracker", "sessionId", sessionId, "chatHistory", chatHistory);
     return !sessionId || chatHistory?.length === 0;
   }, [sessionId, chatHistory]);
 
@@ -276,6 +293,7 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
 
   /**
    * Get a specific property from postChatConfig for the current flow
+   * Supports both dynamic (backend) and hardcoded flows
    * @param {string} propertyName - The name of the config property to retrieve
    * @returns {any} The value of the requested config property
    * @example
@@ -283,6 +301,13 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
    * getPostChatConfigValue('imageUploadLimit') // returns number
    */
   const getPostChatConfigValue = propertyName => {
+    // If using dynamic flow from backend, get config from dynamic flow data
+    if (isDynamicFlow && dynamicFlowData) {
+      const config = getPostChatConfigFromDynamicFlow(dynamicFlowData);
+      return config[propertyName];
+    }
+
+    // Fallback to hardcoded config
     const postChatConfig = getPostChatConfig(storageFlow);
     return postChatConfig[propertyName];
   };
@@ -867,6 +892,72 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
+  /**
+   * Load dynamic flow from backend if flow query parameter is provided
+   * This enables accessing flows via ?flow=flow-route
+   * Runs once on component mount when flow param changes
+   */
+  useEffect(() => {
+    const loadDynamicFlow = async () => {
+      const flowRoute = searchParams.get("flow");
+
+      // If no flow param, skip dynamic loading
+      if (!flowRoute) {
+        return;
+      }
+
+      // Check if it's a hardcoded flow by flow name (not storageFlow which might be null)
+      // We need to check the actual flow route value, not storageFlow
+      const flowNameToCheck = flowRoute.replace(/^\//g, "").replace(/-/g, "");
+
+      if (isHardcodedFlow(flowNameToCheck)) {
+        setIsDynamicFlow(false);
+        return;
+      }
+
+      // Fetch from backend
+      try {
+        setIsLoading(true);
+        setFlowLoadError(null);
+
+        const flowData = await getFlowByRoute(flowRoute);
+
+        if (!flowData) {
+          throw new Error(`Flow not found: ${flowRoute}`);
+        }
+
+        // Set dynamic flow state
+        setIsDynamicFlow(true);
+        setDynamicFlowData(flowData);
+
+        // Trigger intro message fetch and enable audio for dynamic flows
+        setShouldFetchIntro(true);
+        setIsStreamingComplete(true);
+
+        // DON'T set storageFlow for dynamic flows - it causes fallback to hardcoded WebSocket URLs
+        // The flow name from API might match hardcoded flow names and trigger wrong WebSocket lookup
+
+        // Store bot info if available
+        if (flowData.bot) {
+          setBotName(flowData.bot.name);
+          if (flowData.bot.statemachine_length) {
+            setStateMachineLength(flowData.bot.statemachine_length);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to load flow: ${flowRoute}`, error);
+        setFlowLoadError(error.message || `Flow "${flowRoute}" not found`);
+        toast.error(`Failed to load flow: ${flowRoute}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDynamicFlow().catch(err => {
+      console.error("Uncaught error in loadDynamicFlow:", err);
+    });
+  }, [searchParams]); // Use searchParams object directly for stable reference
 
   /**
    * Fetch dynamic image configuration from backend API
@@ -2086,6 +2177,12 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   }
 
   function getSessionRoute() {
+    // For dynamic flows, use bot route from dynamicFlowData
+    if (isDynamicFlow && dynamicFlowData?.bot?.route) {
+      return dynamicFlowData.bot.route;
+    }
+    
+    // For hardcoded flows, use the traditional lookup
     const currentFlow = storageFlow;
     return getRouteFromSession(currentFlow, selectedType);
   }
@@ -2664,6 +2761,41 @@ const ShikshalokamVoiceBasedChat = ({ type = "", variant = "" }) => {
   useEffect(() => {
     console.log(acceptedTnc, "acceptedTnc");
   }, [acceptedTnc]);
+
+  // Show error UI if dynamic flow failed to load
+  if (flowLoadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 px-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🚫</div>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Flow Not Found</h2>
+          <p className="text-gray-600 mb-6">{flowLoadError}</p>
+          <button
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            onClick={() => {
+              setFlowLoadError(null);
+              navigate("/home");
+            }}
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while fetching dynamic flow
+  // Only show loading for dynamic flows, not hardcoded ones
+  const flowParam = searchParams.get("flow");
+  if (flowParam && isDynamicFlow && !dynamicFlowData && !flowLoadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <BiLoader className="animate-spin text-purple-600 text-6xl mb-4" />
+        <p className="text-lg text-gray-700">Loading flow configuration...</p>
+        <p className="text-sm text-gray-500 mt-2">Flow: {flowParam}</p>
+      </div>
+    );
+  }
 
   return (
     <>

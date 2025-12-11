@@ -105,11 +105,19 @@ function CommonHomePage({ usecaseType }) {
       [sessionFlowName.GuestDiscussion]: ROUTES.SHIKSHALOKAM_GUEST_VOICE_CHAT,
       [sessionFlowName.ListeningActivity]: ROUTES.SHIKSHALOKAM_GUEST_LISTENING_CHAT,
       [sessionFlowName.ParentPerceptionSurvey]: ROUTES.SHIKSHALOKAM_PPPI_VOICE_CHAT,
-    }
+    };
 
     const route = flowRoutes[urlFlow];
     if (route) {
+      console.log("Navigating to hardcoded flow route:", route);
       return navigate(route);
+    }
+
+    // Handle dynamic flows from backend (not in hardcoded list)
+    if (urlFlow) {
+      console.log("Flow not found in hardcoded routes, treating as dynamic flow:", urlFlow);
+      // Navigate to guest chat with flow parameter
+      return navigate(`${ROUTES.SHIKSHALOKAM_GUEST_VOICE_CHAT}?flow=${urlFlow}`);
     }
   }, [chatLanguage, urlLanguage, urlFlow, hasSelectedLanguage]);
 

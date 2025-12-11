@@ -136,7 +136,19 @@ function ShikshalokamChat({ type, variant }) {
           setIpCity(locationData?.location?.city);
           setIpCountry(locationData?.location?.country);
         }
-        setFlow(type);
+
+        // Check if there's a dynamic flow in query params
+        const urlParams = new URLSearchParams(window.location.search);
+        const flowParam = urlParams.get("flow");
+
+        // Only set flow from type prop if no flow query param exists
+        if (!flowParam && type) {
+          console.log("Setting flow from type prop:", type);
+          setFlow(type);
+        } else if (flowParam) {
+          console.log("Flow param detected, skipping setFlow:", flowParam);
+        }
+
         getUserFingerPrint();
         await setFinalLanguage();
 
@@ -149,9 +161,18 @@ function ShikshalokamChat({ type, variant }) {
     runSetup();
   }, [accessToken, sessionId]);
 
+  // Check if there's a dynamic flow query param
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasDynamicFlow = urlParams.get("flow");
+
   return (
     <>
-      {companyName && !isLoading && <>{type !== sessionFlowName.SchoolSurvey ? <ShikshalokamVoiceBasedChat type={"shikshalokam"} variant={"publicBot"} /> : <ShikshalokamVoiceBasedChatConf type={"shikshalokam"} variant={"publicBot"} />}</>}
+      {companyName && !isLoading && (
+        <>
+          {/* Use voice-chat-conf.js for dynamic flows or SchoolSurvey */}
+          {hasDynamicFlow || type === sessionFlowName.SchoolSurvey ? <ShikshalokamVoiceBasedChatConf type={"shikshalokam"} variant={"publicBot"} /> : <ShikshalokamVoiceBasedChat type={"shikshalokam"} variant={"publicBot"} />}
+        </>
+      )}
       {isLoading && (
         <div className="loader-load-spinner">
           <div className="div67">

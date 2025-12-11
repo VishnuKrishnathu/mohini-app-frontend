@@ -1,4 +1,4 @@
-import { axiosInstance } from "../client";
+import axiosInstance from "../../utils/axios";
 
 /**
  * Fetch all available flows from the backend
@@ -43,25 +43,35 @@ export const getAllFlows = async () => {
  * // }
  */
 export const getFlowByRoute = async flowRoute => {
+  console.log("[API] getFlowByRoute called with:", flowRoute);
+
   try {
     // Remove leading slash if present to normalize the route
     const normalizedRoute = flowRoute.startsWith("/") ? flowRoute.slice(1) : flowRoute;
+    console.log("[API] Normalized route:", normalizedRoute);
+
+    const apiUrl = `/api/flows/${normalizedRoute}/`;
+    console.log("[API] Making request to:", apiUrl);
 
     const response = await axiosInstance({
       method: "GET",
-      url: `/api/flows/${normalizedRoute}/`,
+      url: apiUrl,
     });
 
+    console.log("[API] Response received:", response.status, response.data);
     return response.data || null;
   } catch (error) {
-    console.error(`Error fetching flow by route '${flowRoute}':`, error);
+    console.error(`[API] Error fetching flow by route '${flowRoute}':`, error);
+    console.error("[API] Error response:", error.response);
+    console.error("[API] Error status:", error.response?.status);
 
     // Return null instead of throwing to allow fallback to hardcoded config
     if (error.response?.status === 404) {
-      console.warn(`Flow not found: ${flowRoute}`);
+      console.warn(`[API] Flow not found (404): ${flowRoute}`);
       return null;
     }
 
+    console.error("[API] Throwing error");
     throw error;
   }
 };

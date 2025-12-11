@@ -253,3 +253,144 @@ export const updatePostChatConfigFromAPI = (flowName, apiConfig) => {
 export const bytesToMB = bytes => {
   return Math.round((bytes / (1024 * 1024)) * 10) / 10;
 };
+
+// ==========================================
+// DYNAMIC FLOW CONFIGURATION (Backend API)
+// ==========================================
+
+/**
+ * Check if a flow exists in hardcoded configuration
+ * @param {string} flowName - The flow name to check (e.g., "guest-discussion")
+ * @returns {boolean} True if flow exists in any hardcoded config object
+ *
+ * @example
+ * isHardcodedFlow("guest-discussion") // Returns: true
+ * isHardcodedFlow("new-dynamic-flow") // Returns: false
+ */
+export const isHardcodedFlow = flowName => {
+  return Boolean(FLOW_CONFIG[flowName] || FLOW_CONFIG_V2[flowName] || FLOW_TO_WEBSOCKET_MAP[flowName] || FLOW_TO_ROUTE_MAP[flowName]);
+};
+
+/**
+ * Get dynamically fetched flow data (placeholder for now, no caching implemented)
+ * @param {string} flowRoute - The flow route (e.g., "/reflection")
+ * @returns {null} Always returns null as caching is not implemented
+ *
+ * @example
+ * const flow = getDynamicFlow("/reflection");
+ * // Returns: null (caching not implemented yet)
+ */
+export const getDynamicFlow = flowRoute => {
+  // No caching implemented yet
+  return null;
+};
+
+/**
+ * Extract WebSocket URL from dynamic flow data
+ * Constructs full WebSocket URL by combining base URL with route from API
+ *
+ * The API now returns only the route (e.g., "ws/common/") instead of full URL.
+ * This function combines it with the base WebSocket host from environment config.
+ *
+ * @param {Object} flowData - The flow data object from backend
+ * @returns {string|null} The full WebSocket URL or null if not available
+ *
+ * @example
+ * // If flowData.websocket_url = "ws/common/"
+ * // And REACT_APP_WEBSOCKET_HOST = "localhost:9000"
+ * const wsUrl = getWebSocketUrlFromDynamicFlow(flowData);
+ * // Returns: "ws://localhost:9000/ws/common/"
+ */
+export const getWebSocketUrlFromDynamicFlow = flowData => {
+  if (!flowData) {
+    console.warn("Cannot get WebSocket URL: flowData is missing");
+    return null;
+  }
+
+  if (!flowData.websocket_url) {
+    console.warn(`WebSocket URL not found in flow: ${flowData.flow_name || "unknown"}`);
+    return null;
+  }
+
+  let wsUrl = flowData.websocket_url;
+
+  // Check if it's already a full URL (starts with http://, https://, ws://, or wss://)
+  if (wsUrl.startsWith("http://") || wsUrl.startsWith("https://") || wsUrl.startsWith("ws://") || wsUrl.startsWith("wss://")) {
+    console.log(`⚠️ API returned full URL instead of route: ${wsUrl}`);
+
+    // Convert http:// to ws:// and https:// to wss://
+    if (wsUrl.startsWith("http://")) {
+      wsUrl = wsUrl.replace("http://", "ws://");
+    } else if (wsUrl.startsWith("https://")) {
+      wsUrl = wsUrl.replace("https://", "wss://");
+    }
+
+    console.log(`🔗 Using WebSocket URL: ${wsUrl}`);
+    return wsUrl;
+  }
+
+  // Otherwise, it's a route - construct full URL
+  let wsRoute = wsUrl;
+
+  // Remove leading slash if present for consistent formatting
+  if (wsRoute.startsWith("/")) {
+    wsRoute = wsRoute.substring(1);
+  }
+
+  // Get WebSocket host from environment
+  const wsHost = process.env.REACT_APP_WEBSOCKET_HOST || "localhost:9000";
+
+  // Determine protocol based on page protocol
+  const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+
+  // Construct full WebSocket URL
+  const fullWsUrl = `${protocol}${wsHost}/${wsRoute}`;
+
+  console.log(`🔗 Constructed WebSocket URL: ${fullWsUrl} (from route: ${wsRoute})`);
+
+  return fullWsUrl;
+};
+
+/**
+ * Extract and transform post-chat configuration from dynamic flow data
+ * Uses image_config from backend to build postChatConfig object
+ *
+ * @param {Object} flowData - The flow data object from backend
+ * @returns {Object} Post-chat configuration object with image upload settings
+ *
+ * @example
+ * const config = getPostChatConfigFromDynamicFlow(flowData);
+ * // Returns: {
+ * //   allowImageUpload: true,
+ * //   imageUploadLimit: 3,
+ * //   maxImageSize: 5242880,
+ * //   displayEditStory: true,
+ * //   displayDownloadStory: true
+ * // }
+ */
+export const getPostChatConfigFromDynamicFlow = flowData => {
+  // Default configuration
+  const defaultConfig = {
+    allowImageUpload: false,
+    imageUploadLimit: 0,
+    maxImageSize: 2 * 1024 * 1024, // 2MB default
+    displayEditStory: true,
+    displayDownloadStory: true,
+  };
+
+  if (!flowData) {
+    console.warn("Cannot get post-chat config: flowData is missing");
+    return defaultConfig;
+  }
+
+  // Extract image_config from flow data
+  const imageConfig = flowData.image_config || {};
+
+  return {
+    allowImageUpload: Boolean(imageConfig.max_images && imageConfig.max_images > 0),
+    imageUploadLimit: imageConfig.max_images || 0,
+    maxImageSize: imageConfig.image_size || defaultConfig.maxImageSize,
+    displayEditStory: true,
+    displayDownloadStory: true,
+  };
+};
